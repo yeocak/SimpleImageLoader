@@ -1,24 +1,26 @@
 package com.yeocak.simpleimageload
 
+import android.R.attr.radius
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.widget.ImageView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
+import androidx.constraintlayout.widget.ConstraintSet
+import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
+import com.squareup.picasso.Transformation
 import com.yeocak.simpleimageload.ImageConvert.bitmapToString
+import com.yeocak.simpleimageload.ImageConvert.roundCorners
 import com.yeocak.simpleimageload.ImageConvert.scaleBitmap
 import com.yeocak.simpleimageload.ImageConvert.stringToBitmap
-import kotlinx.coroutines.*
+
 
 object SimpleImageLoad {
 
     private lateinit var sqlDatabase: SQLiteDatabase
     private var setup = false
+    private var bitmapTarget: Target? = null
 
     private fun setupSQL(context: Context) {
         if (!setup) {
@@ -42,79 +44,44 @@ object SimpleImageLoad {
         sqlDatabase.execSQL("INSERT OR REPLACE INTO images (imageurl,imagevalue) VALUES ('$link', '$image')")
     }
 
-    fun ImageView.loadImage(link: String, context: Context, roundCorner: Int = 0) {
+    fun ImageView.loadImage(link: String, context: Context, cornerRadius: Float = 0f, maxLength: Double = 1000.0) {
         setupSQL(context)
 
         val takeImageString = takeFromSQL(link)
 
         if (takeImageString == null) {
-            CoroutineScope(Dispatchers.IO).launch {
-                this@loadImage.downloadToImageView(link, context)
+
+            downloadAsBitmap(link){ downloadedBitmap ->
+                val scaledBitmap = downloadedBitmap?.scaleBitmap(maxLength)
+                val roundedBitmap = scaledBitmap?.roundCorners(cornerRadius)
+                this.setImageBitmap(roundedBitmap)
+
+                val convertedString = bitmapToString(scaledBitmap)
+                if (convertedString != null) {
+                    addToSQL(link, convertedString)
+                }
+
             }
         } else {
             val convertedBitmap = stringToBitmap(takeImageString)
-            val scaledBitmap = convertedBitmap?.let { scaleBitmap(it) }
-            intoImageView(scaledBitmap, roundCorner, context)
+            val roundedBitmap = convertedBitmap?.roundCorners(cornerRadius)
+            this.setImageBitmap(roundedBitmap)
         }
     }
 
-    private fun ImageView.intoImageView(bitmap: Bitmap?, roundCorner: Int, context: Context) {
-        bitmap.let {
-            if (roundCorner > 0) {
-                Glide.with(context)
-                    .load(bitmap)
-                    .transform(RoundedCorners(roundCorner))
-                    .into(this)
-            } else {
-                Glide.with(context)
-                    .load(bitmap)
-                    .into(this)
+    private fun downloadAsBitmap(link: String,callback: (bitmap: Bitmap?) -> Unit){
+        bitmapTarget = object : Target {
+            override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+                callback(bitmap)
             }
+
+            override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {}
+            override fun onPrepareLoad(placeHolderDrawable: Drawable?) {}
         }
+
+        //Picasso.get().isLoggingEnabled = true
+        Picasso.get()
+            .load(link)
+            .into(bitmapTarget as Target)
     }
-
-    private fun ImageView.downloadToImageView(
-        imageURL: String,
-        context: Context,
-        roundCorner: Int = 0
-    ) {
-        Glide.with(context)
-            .asBitmap()
-            .load(imageURL)
-            .listener(object : RequestListener<Bitmap> {
-                override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Bitmap>?,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    return false
-                }
-
-                override fun onResourceReady(
-                    resource: Bitmap?,
-                    model: Any?,
-                    target: Target<Bitmap>?,
-                    dataSource: DataSource?,
-                    isFirstResource: Boolean
-                ): Boolean {
-
-                    CoroutineScope(Dispatchers.IO).launch {
-                        withContext(Dispatchers.Main) {
-                            intoImageView(resource, roundCorner, context)
-                        }
-                    }
-
-                    val downloadedString = bitmapToString(resource)
-                    if (downloadedString != null) {
-                        addToSQL(imageURL, downloadedString)
-                    }
-
-                    return true
-                }
-
-            })
-            .submit()
-    }
-
 }

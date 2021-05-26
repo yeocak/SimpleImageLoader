@@ -1,8 +1,11 @@
 package com.yeocak.simpleimageload
 
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import androidx.core.graphics.drawable.toBitmap
 import java.io.ByteArrayOutputStream
 
 object ImageConvert {
@@ -19,8 +22,8 @@ object ImageConvert {
         return Base64.encodeToString(b, Base64.DEFAULT)
     }
 
-    fun scaleBitmap(image: Bitmap, maxLength: Double = 600.0): Bitmap {
-        val ratio: Double = image.height.toDouble() / image.width.toDouble()
+    fun Bitmap.scaleBitmap(maxLength: Double): Bitmap {
+        val ratio: Double = this.height.toDouble() / this.width.toDouble()
 
         var newHeight = maxLength
         var newWidth = maxLength
@@ -31,7 +34,17 @@ object ImageConvert {
             newHeight *= (ratio)
         }
 
-        return Bitmap.createScaledBitmap(image, newWidth.toInt(), newHeight.toInt(), false)
+        return Bitmap.createScaledBitmap(this, newWidth.toInt(), newHeight.toInt(), false)
+    }
+
+    fun Bitmap.roundCorners(cornerRadius: Float): Bitmap{
+        if(cornerRadius > 0){
+            val roundedBitmap = RoundedBitmapDrawableFactory.create(Resources.getSystem(), this)
+            roundedBitmap.isCircular = true
+            roundedBitmap.cornerRadius = cornerRadius
+            return roundedBitmap.toBitmap()
+        }
+        return this
     }
 
 }
