@@ -1,20 +1,17 @@
 package com.yeocak.simpleimageload
 
-import android.R.attr.radius
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.widget.ImageView
-import androidx.constraintlayout.widget.ConstraintSet
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
-import com.squareup.picasso.Transformation
 import com.yeocak.simpleimageload.ImageConvert.bitmapToString
 import com.yeocak.simpleimageload.ImageConvert.roundCorners
 import com.yeocak.simpleimageload.ImageConvert.scaleBitmap
 import com.yeocak.simpleimageload.ImageConvert.stringToBitmap
-
 
 object SimpleImageLoad {
 
@@ -50,7 +47,6 @@ object SimpleImageLoad {
         val takeImageString = takeFromSQL(link)
 
         if (takeImageString == null) {
-
             downloadAsBitmap(link){ downloadedBitmap ->
                 val scaledBitmap = downloadedBitmap?.scaleBitmap(maxLength)
                 val roundedBitmap = scaledBitmap?.roundCorners(cornerRadius)
@@ -60,9 +56,9 @@ object SimpleImageLoad {
                 if (convertedString != null) {
                     addToSQL(link, convertedString)
                 }
-
             }
         } else {
+            Log.i("SimpleImageLoad", "Getting image from database.")
             val convertedBitmap = stringToBitmap(takeImageString)
             val roundedBitmap = convertedBitmap?.roundCorners(cornerRadius)
             this.setImageBitmap(roundedBitmap)
@@ -72,11 +68,16 @@ object SimpleImageLoad {
     private fun downloadAsBitmap(link: String,callback: (bitmap: Bitmap?) -> Unit){
         bitmapTarget = object : Target {
             override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+                Log.i("SimpleImageLoad", "Image loaded successfully.")
                 callback(bitmap)
             }
 
-            override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {}
-            override fun onPrepareLoad(placeHolderDrawable: Drawable?) {}
+            override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+                Log.i("SimpleImageLoad", "Image loading failed.")
+            }
+            override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+                Log.i("SimpleImageLoad", "Image loading...")
+            }
         }
 
         //Picasso.get().isLoggingEnabled = true
