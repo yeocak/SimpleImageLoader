@@ -46,5 +46,4 @@ object ImageConvert {
         }
         return this
     }
-
 }

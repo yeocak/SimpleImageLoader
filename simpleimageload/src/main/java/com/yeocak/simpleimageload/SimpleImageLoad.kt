@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.util.Log
 import android.widget.ImageView
 import com.squareup.picasso.Picasso
@@ -41,13 +42,20 @@ object SimpleImageLoad {
         sqlDatabase.execSQL("INSERT OR REPLACE INTO images (imageurl,imagevalue) VALUES ('$link', '$image')")
     }
 
-    fun ImageView.loadImage(link: String, context: Context, cornerRadius: Float = 0f, maxLength: Double = 1000.0) {
+    fun ImageView.loadImage(
+        link: String,
+        context: Context,
+        cornerRadius: Float = 0f,
+        maxLength: Double = 1000.0,
+        errorDrawable: Drawable? = null,
+        placeHolderDrawable: Drawable? = null
+    ) {
         setupSQL(context)
 
         val takeImageString = takeFromSQL(link)
 
         if (takeImageString == null) {
-            downloadAsBitmap(link){ downloadedBitmap ->
+            this.downloadAsBitmap(link, errorDrawable, placeHolderDrawable) { downloadedBitmap ->
                 val scaledBitmap = downloadedBitmap?.scaleBitmap(maxLength)
                 val roundedBitmap = scaledBitmap?.roundCorners(cornerRadius)
                 this.setImageBitmap(roundedBitmap)
@@ -65,7 +73,12 @@ object SimpleImageLoad {
         }
     }
 
-    private fun downloadAsBitmap(link: String,callback: (bitmap: Bitmap?) -> Unit){
+    private fun ImageView.downloadAsBitmap(
+        link: String,
+        errorImageDrawable:Drawable? = null,
+        placeHolderImageDrawable: Drawable? = null,
+        callback: (bitmap: Bitmap?) -> Unit
+    ) {
         bitmapTarget = object : Target {
             override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
                 Log.i("SimpleImageLoad", "Image loaded successfully.")
@@ -74,15 +87,20 @@ object SimpleImageLoad {
 
             override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
                 Log.i("SimpleImageLoad", "Image loading failed.")
+                this@downloadAsBitmap.setImageDrawable(errorImageDrawable)
             }
+
             override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
                 Log.i("SimpleImageLoad", "Image loading...")
+                this@downloadAsBitmap.setImageDrawable(placeHolderImageDrawable)
             }
         }
 
         //Picasso.get().isLoggingEnabled = true
+
         Picasso.get()
             .load(link)
             .into(bitmapTarget as Target)
+
     }
 }
