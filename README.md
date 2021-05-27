@@ -17,10 +17,12 @@ Via this kotlin library;
 <br/>    
 
 *Or you can modify the loading image.*
-> (Your imageview id).loadImage( "Photo Link", (Your Context), cornerRadius = 20f, maxLength = 1000 )
+> (Your imageview id).loadImage( "Photo Link", (Your Context), cornerRadius = 20f, maxLength = 1000, errorDrawable = (Your Drawable), placeHolderDrawable = (Your Drawable) )
 
   - cornerRadius parameter for smoothing edges. (Default = 0f)
   - maxLength parameter for set the maximum length of the image. It determines quality of the image. Aspect ratio is maintained. (Default = 1000)
+  - errorDrawable parameter for the drawable that will appear if the image fails to load.
+  - placeHolderDrawable parameter for the drawable that will appear when the image starts to load.
   
 ---
 
@@ -40,5 +42,5 @@ To implement this library to your project:
 
     dependencies {
       ...
-      implementation 'com.github.yeocak:SimpleImageLoader:0.2.0'
+      implementation 'com.github.yeocak:SimpleImageLoader:0.3.0'
     }
