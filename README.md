@@ -11,13 +11,21 @@ Via this kotlin library;
 ---
 
 *Load image to your imageview. The tool gets the picture from the database if it's there already. If it isn't, tool downloads it from the internet and saves it to the database.*
-> (Your imageview id).loadImage( "Photo Link", (Your Context) )
+
+	(Your imageview id).loadImage( "Photo Link", (Your Context) )
 
 
 <br/>    
 
 *Or you can modify the loading image.*
-> (Your imageview id).loadImage( "Photo Link", (Your Context), cornerRadius = 20f, maxLength = 1000, errorDrawable = (Your Drawable), placeHolderDrawable = (Your Drawable) )
+
+	(Your imageview id).loadImage(	"Photo Link", 
+					(Your Context), 
+					cornerRadius = 20f, 
+					maxLength = 1000, 
+					errorDrawable = (Your Drawable), 
+					placeHolderDrawable = (Your Drawable) 
+				      )
 
   - cornerRadius parameter for smoothing edges. (Default = 0f)
   - maxLength parameter for set the maximum length of the image. It determines quality of the image. Aspect ratio is maintained. (Default = 1000)
