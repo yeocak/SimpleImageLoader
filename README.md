@@ -50,5 +50,5 @@ To implement this library to your project:
 
     dependencies {
       ...
-      implementation 'com.github.yeocak:SimpleImageLoader:0.3.0'
+      implementation 'com.github.yeocak:SimpleImageLoader:0.4.0'
     }
